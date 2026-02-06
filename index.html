@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ANA GAMING | Sustentação</title>
+  <link rel="icon" type="image/png" href="/Users/julio.silva/Documents/SustentaHub Ana Gaming/assests/img/favicon.ico" />
+  <link rel="stylesheet" href="./assests/css/painel-sla.css" />
+</head>
+
+<body>
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand">
+      <!-- IMAGEM NO LUGAR DO "AG" -->
+      <img
+        class="brand-badge"
+        src="/Users/julio.silva/Documents/SustentaHub Ana Gaming/assests/img/AnaGaming.jpeg"
+        alt="ANA Gaming"
+      />
+
+      <div class="brand-text">
+        <div class="brand-title">ANA GAMING</div>
+        <div class="brand-sub">SUSTENTAÇÃO / SUPORTE</div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab is-active" id="tab-painel" type="button">Painel Geral</button>
+      <button class="tab" id="tab-looker" type="button">Looker Dash</button>
+    </nav>
+  </header>
+
+  <div class="divider"></div>
+
+  <main class="page">
+
+    <!-- PAINEL GERAL -->
+    <section id="view-painel" class="view is-visible">
+      <div class="cards">
+        <div class="card">
+          <h3>AGUARDANDO</h3>
+          <span id="m-aguard">0</span>
+        </div>
+
+        <div class="card">
+          <h3>ATENDIMENTO</h3>
+          <span id="m-atend">0</span>
+        </div>
+
+        <div class="card alert">
+          <h3>FRAUDADOR</h3>
+          <span id="m-fraud">0</span>
+        </div>
+
+        <div class="card alert">
+          <h3>POSSÍVEL</h3>
+          <span id="m-poss">0</span>
+        </div>
+
+        <div class="card alert verif">
+          <h3>VERIFICAÇÃO</h3>
+          <span id="m-verif">0</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>MARCA</th>
+              <th>ID USUÁRIO</th>
+              <th>CDT</th>
+              <th>JOGO</th>
+              <th>RESUMO DO INCIDENTE</th>
+              <th>STATUS</th>
+              <th>VERIFICAÇÃO</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela">
+            <tr>
+              <td colspan="7" class="loading">Sincronizando dados da planilha...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- REMOVIDO: SUPORTE 01 / SUPORTE 02 -->
+      <!-- IMAGEM NA PARTE DE BAIXO -->
+      <div class="support-row">
+        <img
+          src="/Users/julio.silva/Documents/SustentaHub Ana Gaming/assests/img/AnaGaming.jpeg"
+          alt="Rodapé"
+          style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
+        />
+      </div>
+    </section>
+
+    <!-- LOOKER DASH -->
+    <section id="view-looker" class="view">
+      <div class="looker-wrap">
+        <iframe
+          id="looker-iframe"
+          title="Looker Dashboard"
+          src="https://lookerstudio.google.com/embed/reporting/9eb97072-2b61-49cb-85e3-8226f4246829/page/kCMnF"
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+      </div>
+
+      <!-- REMOVIDO: DATA INÍCIO / DATA FIM / BOTÃO SINCRONIZAR / STATUS -->
+      <!-- (mantido apenas o iframe do dashboard) -->
+    </section>
+
+  </main>
+
+  <!-- JS (ordem IMPORTA) -->
+  <script src="./assests/js/config.js"></script>
+  <script src="./assests/js/api.js"></script>
+  <script src="./assests/js/painel-sla.js"></script>
+</body>
+</html>

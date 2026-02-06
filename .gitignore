@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.env
+.env.*
+.venv/
+venv/
+.pytest_cache/
+
+# Credentials
+credentials.json
+
+# Logs
+uvicorn.log
+
+# macOS
+.DS_Store
