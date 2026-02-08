@@ -300,4 +300,4 @@ initSyncBarDefaultDates();
 initSyncButton();
 
 atualizarPainel();
-setInterval(atualizarPainel, window.APP_CONFIG?.REFRESH_MS ?? 600000);
+setInterval(atualizarPainel, window.APP_CONFIG?.REFRESH_MS ?? 300000);
