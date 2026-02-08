@@ -6,5 +6,5 @@ window.APP_CONFIG = {
   SYNC_API_BASE: "",
 
   // Atualização automática do Painel Geral
-  REFRESH_MS: 600000
+  REFRESH_MS: 300000
 };
