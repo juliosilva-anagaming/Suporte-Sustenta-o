@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ANA GAMING | Sustentação</title>
-  <link rel="icon" type="image/png" href="assests/img/favicon.ico" />
+  <link rel="icon" type="image/png" href="/Users/julio.silva/Documents/SustentaHub Ana Gaming/assests/img/favicon.ico" />
   <link rel="stylesheet" href="./assests/css/painel-sla.css" />
 </head>
 
@@ -12,11 +12,10 @@
   <!-- TOP BAR -->
   <header class="topbar">
     <div class="brand">
-      <!-- IMAGEM NO LUGAR DO "AG" -->
       <img
         class="brand-badge"
-        src="assests/img/AnaGaming.jpeg"
-        alt="Ana Gaming"
+        src="/Users/julio.silva/Documents/SustentaHub Ana Gaming/assests/img/AnaGaming.jpeg"
+        alt="ANA Gaming"
       />
 
       <div class="brand-text">
@@ -37,6 +36,20 @@
 
     <!-- PAINEL GERAL -->
     <section id="view-painel" class="view is-visible">
+
+      <!-- Métricas rápidas (acima dos quadros) -->
+      <div class="metrics-bar">
+        <div class="metric">
+          <span class="metric-label">TOTAL DE CDT</span>
+          <span class="metric-value" id="m-total-cdt">0</span>
+        </div>
+
+        <div class="metric">
+          <span class="metric-label">TEMPO MÉDIO DE ENTREGA (CDT)</span>
+          <span class="metric-value" id="m-avg-cdt">--</span>
+        </div>
+      </div>
+
       <div class="cards">
         <div class="card">
           <h3>AGUARDANDO</h3>
@@ -68,29 +81,32 @@
         <table>
           <thead>
             <tr>
-              <th>MARCA</th>
+              <th>BRAND</th>
               <th>ID USUÁRIO</th>
               <th>CDT</th>
               <th>JOGO</th>
               <th>RESUMO DO INCIDENTE</th>
               <th>STATUS</th>
+              <th>RESPONSÁVEL</th>
               <th>VERIFICAÇÃO</th>
             </tr>
           </thead>
           <tbody id="corpo-tabela">
             <tr>
-              <td colspan="7" class="loading">Sincronizando dados da planilha...</td>
+              <td colspan="8" class="loading">Sincronizando dados da planilha...</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-  
+      <!-- (APENAS ESSE) Atualizado em cima da imagem grande / centralizado -->
+      <div class="updated-at" id="m-updated-bottom" style="text-align:center;">Atualizado há --</div>
+
       <div class="support-row">
         <img
-          src="assests/img/AnaGaming.jpeg"
+          src="/Users/julio.silva/Documents/SustentaHub Ana Gaming/assests/img/AnaGaming.jpeg"
           alt="Rodapé"
-          style="max-width: 100%; height: auto; display: block; margin: 0 auto;"
+          style="max-width: 70%; height: auto; display: block; margin: 0 auto;"
         />
       </div>
     </section>
@@ -106,9 +122,6 @@
           allowfullscreen
         ></iframe>
       </div>
-
-      <!-- REMOVIDO: DATA INÍCIO / DATA FIM / BOTÃO SINCRONIZAR / STATUS -->
-      <!-- (mantido apenas o iframe do dashboard) -->
     </section>
 
   </main>
