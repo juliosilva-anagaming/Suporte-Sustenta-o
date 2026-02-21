@@ -1,45 +1,165 @@
+/* =========================================================
+   painel-sla.js (COMPLETO - com fallback)
+   Caminho:
+   SustentaHub Ana Gaming/assests/js/painel-sla.js
+   ========================================================= */
+
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.innerText = value;
 }
 
-/* ---------- Render da tabela do Painel Geral ---------- */
+function getBrandClass(brandRaw) {
+  const b = (brandRaw || "").toString().trim().toLowerCase();
+  if (!b) return "";
+  if (b.includes("incidente")) return "brand-incidente";
+  if (b.includes("a7kbetbr")) return "brand-a7k";
+  if (b.includes("cassinobetbr")) return "brand-cassino";
+  if (b.includes("verabetbr")) return "brand-vera";
+  return "";
+}
+
+/**
+ * Recebe minutos (number) e formata:
+ *  - 5m
+ *  - 2h 05m
+ *  - 1d 2h 05m
+ */
+function formatAvgTime(value) {
+  if (value === null || value === undefined || value === "") return "--";
+  if (typeof value !== "number" || !isFinite(value)) return String(value);
+
+  const totalMin = Math.max(0, Math.round(value));
+  const days = Math.floor(totalMin / (24 * 60));
+  const remAfterDays = totalMin % (24 * 60);
+  const hours = Math.floor(remAfterDays / 60);
+  const mins = remAfterDays % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${String(mins).padStart(2, "0")}m`;
+  if (hours > 0) return `${hours}h ${String(mins).padStart(2, "0")}m`;
+  return `${mins}m`;
+}
+
+/* ---------- parse Tempo de Entrega ("0 dias 15 horas 50 min") ---------- */
+function parseTempoEntregaToMinutes(v) {
+  if (v === null || v === undefined || v === "") return null;
+  if (typeof v === "number" && isFinite(v)) return v;
+
+  const s = String(v).trim().toLowerCase();
+  if (!s) return null;
+
+  const mDias = s.match(/(\d+)\s*dia[s]?/);
+  const mHoras = s.match(/(\d+)\s*hora[s]?/);
+  const mMin = s.match(/(\d+)\s*min/);
+
+  if (mDias || mHoras || mMin) {
+    const dias = mDias ? parseInt(mDias[1], 10) : 0;
+    const horas = mHoras ? parseInt(mHoras[1], 10) : 0;
+    const mins = mMin ? parseInt(mMin[1], 10) : 0;
+    return (dias * 24 * 60) + (horas * 60) + mins;
+  }
+  return null;
+}
+
+function getTempoEntregaFromLinha(l) {
+  // Cabeçalho exato: "Tempo de Entrega"
+  return (
+    l?.["Tempo de Entrega"] ??
+    l?.["Tempo de entrega"] ??
+    l?.tempo_entrega ??
+    l?.tempo_de_entrega ??
+    l?.tempoEntrega ??
+    null
+  );
+}
+
+function calcAvgEntregaMinutes(linhas) {
+  if (!Array.isArray(linhas) || linhas.length === 0) return null;
+  const mins = linhas
+    .map(l => parseTempoEntregaToMinutes(getTempoEntregaFromLinha(l)))
+    .filter(x => typeof x === "number" && isFinite(x) && x >= 0);
+
+  if (mins.length === 0) return null;
+  const sum = mins.reduce((a, b) => a + b, 0);
+  return sum / mins.length;
+}
+
+/* ---------- “Atualizado há...” ---------- */
+let lastSuccessfulUpdateAt = null;
+let updatedTickerStarted = false;
+
+function humanizeElapsed(ms) {
+  const sec = Math.max(0, Math.floor(ms / 1000));
+  if (sec < 60) return `${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  return `${d}d`;
+}
+
+function startUpdatedTicker() {
+  if (updatedTickerStarted) return;
+  updatedTickerStarted = true;
+
+  setInterval(() => {
+    const el = document.getElementById("m-updated-bottom");
+    if (!el) return;
+
+    if (!lastSuccessfulUpdateAt) {
+      setText("m-updated-bottom", "Atualizado há --");
+      return;
+    }
+    setText("m-updated-bottom", `Atualizado há ${humanizeElapsed(Date.now() - lastSuccessfulUpdateAt)}`);
+  }, 1000);
+}
+
+/* ---------- Render da tabela ---------- */
 function renderTabela(linhas) {
   const tb = document.getElementById("corpo-tabela");
   if (!tb) return;
 
-  if (!linhas || linhas.length === 0) {
-    tb.innerHTML = `<tr><td colspan="7" class="loading">Nenhum chamado aberto hoje.</td></tr>`;
+  if (!Array.isArray(linhas) || linhas.length === 0) {
+    tb.innerHTML = `<tr><td colspan="8" class="loading">Nenhum chamado aberto hoje.</td></tr>`;
     return;
   }
 
   tb.innerHTML = linhas.map((l) => {
-    const cdtHtml = l.cdt?.url
+    const cdtHtml = l?.cdt?.url
       ? `<a href="${l.cdt.url}" target="_blank" rel="noopener" class="link-cdt">${l.cdt.texto}</a>`
-      : (l.cdt?.texto || "");
+      : (l?.cdt?.texto || "");
 
-    const statusClass = (l.status || "").includes("FRAUDADOR") ? "txt-critico" : "";
-    const verifHtml = l.verificacao ? `<span class="txt-verif">${l.verificacao}</span>` : "";
+    const statusStr = l?.status || "";
+    const statusClass = statusStr.includes("FRAUDADOR") ? "txt-critico" : "";
+
+    const verifStr = l?.verificacao || "";
+    const verifHtml = verifStr ? `<span class="txt-verif">${verifStr}</span>` : "";
+
+    const brand = l?.casa_2 || "";
+    const brandClass = getBrandClass(brand);
+
+    const responsavel = l?.responsavel || "";
 
     return `
       <tr>
-        <td style="font-weight:900;">${l.casa_2 || ""}</td>
-        <td style="font-weight:900;">${l.id || ""}</td>
+        <td class="${brandClass}" style="font-weight:900;">${brand}</td>
+        <td style="font-weight:900;">${l?.id || ""}</td>
         <td>${cdtHtml}</td>
-        <td style="font-weight:800;">${l.jogo || ""}</td>
-        <td class="resumo-cell">${l.resumo || ""}</td>
-        <td class="${statusClass}" style="font-weight:900;">${l.status || ""}</td>
+        <td style="font-weight:800;">${l?.jogo || ""}</td>
+        <td class="resumo-cell">${l?.resumo || ""}</td>
+        <td class="${statusClass}" style="font-weight:900;">${statusStr}</td>
+        <td style="font-weight:900;">${responsavel}</td>
         <td style="font-weight:900;">${verifHtml}</td>
       </tr>
     `;
   }).join("");
 }
 
-/* ---------- Atualização do Painel Geral via Apps Script ---------- */
+/* ---------- Atualização do Painel (Apps Script JSONP) ---------- */
 async function atualizarPainel() {
   try {
     const url = window.APP_CONFIG?.SLA_ENDPOINT;
-
     if (!url) {
       console.warn("Defina APP_CONFIG.SLA_ENDPOINT em assests/js/config.js");
       return;
@@ -53,19 +173,51 @@ async function atualizarPainel() {
       return;
     }
 
-    setText("m-aguard", d.contadores?.aguardando ?? 0);
-    setText("m-atend",  d.contadores?.atendimento ?? 0);
-    setText("m-fraud",  d.contadores?.fraudadores ?? 0);
-    setText("m-poss",   d.contadores?.possiveis ?? 0);
-    setText("m-verif",  d.contadores?.verificacao ?? 0);
+    // Cards (mantém seu padrão atual)
+    setText("m-aguard", d?.contadores?.aguardando ?? 0);
+    setText("m-atend",  d?.contadores?.atendimento ?? 0);
+    setText("m-fraud",  d?.contadores?.fraudadores ?? 0);
+    setText("m-poss",   d?.contadores?.possiveis ?? 0);
+    setText("m-verif",  d?.contadores?.verificacao ?? 0);
 
-    renderTabela(d.linhas);
+    // ===== TOTAL CDT =====
+    const totalGeral = d?.metricas?.total_cdt_geral;
+    const totalFallback = Array.isArray(d?.linhas) ? d.linhas.length : (d?.contadores?.atendimento ?? 0);
+    const totalFinal = (typeof totalGeral === "number" && isFinite(totalGeral) && totalGeral > 0)
+      ? totalGeral
+      : totalFallback;
+
+    setText("m-total-cdt", totalFinal);
+
+    // ===== TEMPO MÉDIO =====
+    const avgBackendMin = d?.metricas?.tempo_medio_cdt_min;
+    const avgCalcMin = calcAvgEntregaMinutes(d?.linhas);
+
+    const avgFinal = (typeof avgBackendMin === "number" && isFinite(avgBackendMin) && avgBackendMin > 0)
+      ? avgBackendMin
+      : avgCalcMin;
+
+    setText("m-avg-cdt", formatAvgTime(avgFinal));
+
+    // ===== Atualizado há... =====
+    const iso = d?.metricas?.atualizadoEm;
+    if (iso) {
+      const t = new Date(iso).getTime();
+      lastSuccessfulUpdateAt = !isNaN(t) ? t : Date.now();
+    } else {
+      lastSuccessfulUpdateAt = Date.now();
+    }
+    startUpdatedTicker();
+
+    // Tabela (linhas abertas)
+    renderTabela(d?.linhas);
+
   } catch (err) {
     console.error(err);
   }
 }
 
-/* ---------- Tabs: Painel Geral / Looker ---------- */
+/* ---------- Tabs ---------- */
 function initTabs() {
   const tabPainel = document.getElementById("tab-painel");
   const tabLooker = document.getElementById("tab-looker");
@@ -91,213 +243,11 @@ function initTabs() {
   tabLooker?.addEventListener("click", showLooker);
 }
 
-/* ---------- Sync: chama FastAPI Mongo->Sheets e recarrega Looker ---------- */
-// Normaliza várias entradas de data (aceita 'YYYY-MM-DD', 'D/M/YYYY', 'DD/MM/YYYY' e 'DD-MM-YYYY') e retorna ISO 'YYYY-MM-DD' ou null
-function normalizeDateString(s) {
-  if (!s) return null;
-  s = s.trim();
-
-  // YYYY-MM-DD
-  const r1 = /^\d{4}-\d{2}-\d{2}$/;
-  if (r1.test(s)) return s;
-
-  // D/M/YYYY ou DD/MM/YYYY ou com '-'
-  const r2 = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
-  const m = s.match(r2);
-  if (m) {
-    const d = String(m[1]).padStart(2, "0");
-    const mo = String(m[2]).padStart(2, "0");
-    const y = m[3];
-    // valida simples de data
-    const date = new Date(`${y}-${mo}-${d}`);
-    if (!isNaN(date.getTime())) return `${y}-${mo}-${d}`;
-  }
-
-  // fallback: tente Date parsing
-  const tryDate = new Date(s);
-  if (!isNaN(tryDate.getTime())) {
-    const yyyy = tryDate.getFullYear();
-    const mm = String(tryDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(tryDate.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  return null;
-}
-
-// Formata ISO 'YYYY-MM-DD' para exibição 'DD/MM/YYYY'
-function formatIsoToDisplayDMY(iso) {
-  if (!iso) return "";
-  const p = iso.split("-");
-  if (p.length !== 3) return iso;
-  return `${p[2]}/${p[1]}/${p[0]}`;
-}
-
-function initSyncBarDefaultDates() {
-  const dtIni = document.getElementById("dt-inicio");
-  const dtFim = document.getElementById("dt-fim");
-  if (!dtIni || !dtFim) return;
-
-  const hoje = new Date();
-  const yyyy = hoje.getFullYear();
-  const mm = String(hoje.getMonth() + 1).padStart(2, "0");
-  const dd = String(hoje.getDate()).padStart(2, "0");
-  const iso = `${yyyy}-${mm}-${dd}`;
-
-  // Mostrar data como DD/MM/YYYY no campo para melhor UX (mas sempre normalizamos ao enviar)
-  const display = `${dd}/${mm}/${yyyy}`;
-  if (!dtIni.value) dtIni.value = display;
-  if (!dtFim.value) dtFim.value = display;
-
-  // permite digitar manualmente e normaliza na saída do campo
-  [dtIni, dtFim].forEach((el) => {
-    el.addEventListener('blur', () => {
-      const norm = normalizeDateString(el.value);
-      if (norm) {
-        // exibimos no formato DD/MM/YYYY
-        el.value = formatIsoToDisplayDMY(norm);
-        document.getElementById('sync-status').innerText = '';
-      } else {
-        // avisa sem bloquear o usuário
-        document.getElementById('sync-status').innerText = 'Formato de data inválido. Use DD/MM/YYYY ou YYYY-MM-DD.';
-      }
-    });
-
-    // permite apenas números, '/', '-' (melhora UX)
-    el.addEventListener('input', () => {
-      el.value = el.value.replace(/[^0-9\-\/]*/g, '');
-    });
-
-    // se o campo for preenchido por um datepicker que fornece YYYY-MM-DD, normalizamos na blur
-  });
-}
-
-async function sincronizarMongoParaSheets() {
-  const baseRaw = window.APP_CONFIG?.SYNC_API_BASE ?? "";
-  let base = baseRaw.replace(/\/$/, "");
-  const statusEl = document.getElementById("sync-status");
-  const btn = document.getElementById("btn-sync");
-
-  // Se o APP_CONFIG.SYNC_API_BASE estiver vazio e a página foi aberta como file://,
-  // mostrar instrução clara (evita "Failed to fetch" quando a pessoa abriu o HTML localmente)
-  if (!baseRaw && window.location && window.location.protocol === 'file:') {
-    if (statusEl) statusEl.innerText = "Abra esta página via http://localhost:8000/ (inicie o servidor FastAPI). Não abra o arquivo HTML diretamente.";
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  // Se base não foi configurada, tente usar origin (caso a página esteja servida por HTTP(S))
-  if (!baseRaw) {
-    try {
-      const origin = window.location.origin;
-      if (origin && origin !== 'null') base = origin;
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  let inicio = document.getElementById("dt-inicio")?.value;
-  let fim = document.getElementById("dt-fim")?.value;
-
-  inicio = normalizeDateString(inicio);
-  fim = normalizeDateString(fim);
-
-  if (!inicio || !fim) {
-    if (statusEl) statusEl.innerText = "Formato inválido. Use YYYY-MM-DD ou DD/MM/YYYY.";
-    return;
-  }
-
-  // Payload para agendar em background (POST /sync)
-  const payload = {
-    inicio,
-    fim,
-    hora_inicio: "00:00",
-    hora_fim: "23:59",
-    debug: false,
-  };
-
-  const url = `${base.replace(/\/$/, "")}/sync`;
-
-  try {
-    if (btn) btn.disabled = true;
-    if (statusEl) statusEl.innerText = "Agendando sincronização em background…";
-
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await resp.json().catch(() => null);
-
-    if (!resp.ok) {
-      const msg = data?.detail || data?.message || `HTTP ${resp.status}`;
-      throw new Error(msg);
-    }
-
-    // Sucesso: operação agendada
-    if (statusEl) statusEl.innerText = data?.message || "Sincronização agendada. Verifique logs para status.";
-
-    // inicia polling para checar /last-sync e atualizar a UI quando terminar
-    (function startLastSyncPolling(){
-      const pollInterval = 3000;
-      let attempts = 0;
-      const maxAttempts = 120; // 6 minutos max
-
-      async function poll() {
-        attempts += 1;
-        try {
-          const resp = await fetch(`${base}/last-sync`);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const s = await resp.json();
-          if (s.status === 'running' || s.status === 'queued') {
-            if (statusEl) statusEl.innerText = `Sincronização: ${s.status} - ${s.message}`;
-            if (attempts < maxAttempts) setTimeout(poll, pollInterval);
-            else if (statusEl) statusEl.innerText = `Sincronização em andamento há muito tempo... verifique logs.`;
-            return;
-          }
-
-          // finalizado ou falhou
-          if (s.status === 'done') {
-            if (statusEl) statusEl.innerText = `Concluído: ${s.linhas} linhas. ${s.message}`;
-            // Recarrega Looker e Painel
-            const iframe = document.getElementById("looker-iframe");
-            if (iframe) iframe.src = iframe.src;
-            await atualizarPainel();
-            return;
-          }
-
-          if (s.status === 'failed') {
-            if (statusEl) statusEl.innerText = `Falha: ${s.error || s.message}`;
-          }
-        } catch (err) {
-          console.error('Erro no polling /last-sync', err);
-          if (statusEl) statusEl.innerText = `Erro ao checar status: ${err.message}`;
-        }
-      }
-
-      // start
-      setTimeout(poll, 2000);
-    })();
-
-  } catch (err) {
-    console.error(err);
-    if (statusEl) statusEl.innerText = `Falha: ${err.message}`;
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-function initSyncButton() {
-  const btn = document.getElementById("btn-sync");
-  if (!btn) return;
-  btn.addEventListener("click", sincronizarMongoParaSheets);
-}
-
 /* ---------- Boot ---------- */
-initTabs();
-initSyncBarDefaultDates();
-initSyncButton();
+document.addEventListener("DOMContentLoaded", () => {
+  initTabs();
+  atualizarPainel();
 
-atualizarPainel();
-setInterval(atualizarPainel, window.APP_CONFIG?.REFRESH_MS ?? 300000);
+  const refresh = window.APP_CONFIG?.REFRESH_MS ?? 600000;
+  setInterval(atualizarPainel, refresh);
+});
