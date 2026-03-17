@@ -62,7 +62,6 @@ function parseTempoEntregaToMinutes(v) {
 }
 
 function getTempoEntregaFromLinha(l) {
-  // Cabeçalho exato: "Tempo de Entrega"
   return (
     l?.["Tempo de Entrega"] ??
     l?.["Tempo de entrega"] ??
@@ -173,7 +172,7 @@ async function atualizarPainel() {
       return;
     }
 
-    // Cards (mantém seu padrão atual)
+    // Cards
     setText("m-aguard", d?.contadores?.aguardando ?? 0);
     setText("m-atend",  d?.contadores?.atendimento ?? 0);
     setText("m-fraud",  d?.contadores?.fraudadores ?? 0);
@@ -189,15 +188,24 @@ async function atualizarPainel() {
 
     setText("m-total-cdt", totalFinal);
 
-    // ===== TEMPO MÉDIO =====
+    // ===== TEMPO MÉDIO CDT =====
+    const avgBackendTexto = d?.metricas?.tempo_medio_cdt_texto;
     const avgBackendMin = d?.metricas?.tempo_medio_cdt_min;
     const avgCalcMin = calcAvgEntregaMinutes(d?.linhas);
 
-    const avgFinal = (typeof avgBackendMin === "number" && isFinite(avgBackendMin) && avgBackendMin > 0)
-      ? avgBackendMin
-      : avgCalcMin;
+    const avgFinalTexto = (avgBackendTexto && String(avgBackendTexto).trim() !== "")
+      ? avgBackendTexto
+      : formatAvgTime(
+          (typeof avgBackendMin === "number" && isFinite(avgBackendMin) && avgBackendMin > 0)
+            ? avgBackendMin
+            : avgCalcMin
+        );
 
-    setText("m-avg-cdt", formatAvgTime(avgFinal));
+    setText("m-avg-cdt", avgFinalTexto);
+
+    // ===== TEMPO MÉDIO INCIDENTE =====
+    const avgIncTexto = d?.metricas?.tempo_medio_incidente_texto;
+    setText("m-avg-incidente", avgIncTexto && String(avgIncTexto).trim() !== "" ? avgIncTexto : "--");
 
     // ===== Atualizado há... =====
     const iso = d?.metricas?.atualizadoEm;
@@ -209,7 +217,6 @@ async function atualizarPainel() {
     }
     startUpdatedTicker();
 
-    // Tabela (linhas abertas)
     renderTabela(d?.linhas);
 
   } catch (err) {
