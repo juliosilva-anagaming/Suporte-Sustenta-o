@@ -1,5 +1,5 @@
 /* =========================================================
-   painel-sla.js (COMPLETO - com fallback)
+   painel-sla.js (COMPLETO)
    Caminho:
    SustentaHub Ana Gaming/assests/js/painel-sla.js
    ========================================================= */
@@ -17,70 +17,6 @@ function getBrandClass(brandRaw) {
   if (b.includes("cassinobetbr")) return "brand-cassino";
   if (b.includes("verabetbr")) return "brand-vera";
   return "";
-}
-
-/**
- * Recebe minutos (number) e formata:
- *  - 5m
- *  - 2h 05m
- *  - 1d 2h 05m
- */
-function formatAvgTime(value) {
-  if (value === null || value === undefined || value === "") return "--";
-  if (typeof value !== "number" || !isFinite(value)) return String(value);
-
-  const totalMin = Math.max(0, Math.round(value));
-  const days = Math.floor(totalMin / (24 * 60));
-  const remAfterDays = totalMin % (24 * 60);
-  const hours = Math.floor(remAfterDays / 60);
-  const mins = remAfterDays % 60;
-
-  if (days > 0) return `${days}d ${hours}h ${String(mins).padStart(2, "0")}m`;
-  if (hours > 0) return `${hours}h ${String(mins).padStart(2, "0")}m`;
-  return `${mins}m`;
-}
-
-/* ---------- parse Tempo de Entrega ("0 dias 15 horas 50 min") ---------- */
-function parseTempoEntregaToMinutes(v) {
-  if (v === null || v === undefined || v === "") return null;
-  if (typeof v === "number" && isFinite(v)) return v;
-
-  const s = String(v).trim().toLowerCase();
-  if (!s) return null;
-
-  const mDias = s.match(/(\d+)\s*dia[s]?/);
-  const mHoras = s.match(/(\d+)\s*hora[s]?/);
-  const mMin = s.match(/(\d+)\s*min/);
-
-  if (mDias || mHoras || mMin) {
-    const dias = mDias ? parseInt(mDias[1], 10) : 0;
-    const horas = mHoras ? parseInt(mHoras[1], 10) : 0;
-    const mins = mMin ? parseInt(mMin[1], 10) : 0;
-    return (dias * 24 * 60) + (horas * 60) + mins;
-  }
-  return null;
-}
-
-function getTempoEntregaFromLinha(l) {
-  return (
-    l?.["Tempo de Entrega"] ??
-    l?.["Tempo de entrega"] ??
-    l?.tempo_entrega ??
-    l?.tempo_de_entrega ??
-    l?.tempoEntrega ??
-    null
-  );
-}
-
-function calcAvgEntregaMinutes(linhas) {
-  if (!Array.isArray(linhas) || linhas.length === 0) return null;
-  const mins = linhas
-    .map(l => parseTempoEntregaToMinutes(getTempoEntregaFromLinha(l)))
-    .filter(x => typeof x === "number" && isFinite(x) && x >= 0);
-
-  if (mins.length === 0) return null;
-  const sum = mins.reduce((a, b) => a + b, 0);
-  return sum / mins.length;
 }
 
 /* ---------- “Atualizado há...” ---------- */
@@ -179,33 +115,13 @@ async function atualizarPainel() {
     setText("m-poss",   d?.contadores?.possiveis ?? 0);
     setText("m-verif",  d?.contadores?.verificacao ?? 0);
 
-    // ===== TOTAL CDT =====
-    const totalGeral = d?.metricas?.total_cdt_geral;
-    const totalFallback = Array.isArray(d?.linhas) ? d.linhas.length : (d?.contadores?.atendimento ?? 0);
-    const totalFinal = (typeof totalGeral === "number" && isFinite(totalGeral) && totalGeral > 0)
-      ? totalGeral
-      : totalFallback;
+    // ===== TOTAIS VINDO DA PLANILHA LOOKER =====
+    setText("m-total-cdt", d?.metricas?.total_cdt_geral ?? 0);
+    setText("m-total-incidente", d?.metricas?.total_incidente_geral ?? 0);
 
-    setText("m-total-cdt", totalFinal);
-
-    // ===== TEMPO MÉDIO CDT =====
-    const avgBackendTexto = d?.metricas?.tempo_medio_cdt_texto;
-    const avgBackendMin = d?.metricas?.tempo_medio_cdt_min;
-    const avgCalcMin = calcAvgEntregaMinutes(d?.linhas);
-
-    const avgFinalTexto = (avgBackendTexto && String(avgBackendTexto).trim() !== "")
-      ? avgBackendTexto
-      : formatAvgTime(
-          (typeof avgBackendMin === "number" && isFinite(avgBackendMin) && avgBackendMin > 0)
-            ? avgBackendMin
-            : avgCalcMin
-        );
-
-    setText("m-avg-cdt", avgFinalTexto);
-
-    // ===== TEMPO MÉDIO INCIDENTE =====
-    const avgIncTexto = d?.metricas?.tempo_medio_incidente_texto;
-    setText("m-avg-incidente", avgIncTexto && String(avgIncTexto).trim() !== "" ? avgIncTexto : "--");
+    // ===== TEMPOS MÉDIOS VINDO DA PLANILHA LOOKER =====
+    setText("m-avg-cdt", d?.metricas?.tempo_medio_cdt_texto || "--");
+    setText("m-avg-incidente", d?.metricas?.tempo_medio_incidente_texto || "--");
 
     // ===== Atualizado há... =====
     const iso = d?.metricas?.atualizadoEm;
