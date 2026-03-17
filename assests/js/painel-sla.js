@@ -108,22 +108,18 @@ async function atualizarPainel() {
       return;
     }
 
-    // Cards
     setText("m-aguard", d?.contadores?.aguardando ?? 0);
     setText("m-atend",  d?.contadores?.atendimento ?? 0);
     setText("m-fraud",  d?.contadores?.fraudadores ?? 0);
     setText("m-poss",   d?.contadores?.possiveis ?? 0);
     setText("m-verif",  d?.contadores?.verificacao ?? 0);
 
-    // ===== TOTAIS VINDO DA PLANILHA LOOKER =====
     setText("m-total-cdt", d?.metricas?.total_cdt_geral ?? 0);
     setText("m-total-incidente", d?.metricas?.total_incidente_geral ?? 0);
 
-    // ===== TEMPOS MÉDIOS VINDO DA PLANILHA LOOKER =====
     setText("m-avg-cdt", d?.metricas?.tempo_medio_cdt_texto || "--");
     setText("m-avg-incidente", d?.metricas?.tempo_medio_incidente_texto || "--");
 
-    // ===== Atualizado há... =====
     const iso = d?.metricas?.atualizadoEm;
     if (iso) {
       const t = new Date(iso).getTime();
