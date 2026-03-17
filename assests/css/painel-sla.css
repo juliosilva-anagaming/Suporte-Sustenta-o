@@ -82,6 +82,8 @@ body{
   gap:16px;
   margin: 6px 0 14px;
 }
+
+/* 🔥 ALTERAÇÃO AQUI */
 .metric{
   flex:1;
   background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01));
@@ -90,9 +92,18 @@ body{
   padding:18px 18px;
   box-shadow: 0 10px 40px rgba(0,0,0,.35);
   display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.metric-group{
+  display:flex;
   align-items:baseline;
   justify-content:space-between;
+  gap:16px;
 }
+/* 🔥 FIM ALTERAÇÃO */
+
 .metric-label{
   font-size:12px;
   letter-spacing:.18em;
