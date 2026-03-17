@@ -37,16 +37,30 @@
     <!-- PAINEL GERAL -->
     <section id="view-painel" class="view is-visible">
 
-      <!-- Métricas rápidas (acima dos quadros) -->
+      <!-- Métricas rápidas -->
       <div class="metrics-bar">
         <div class="metric">
-          <span class="metric-label">TOTAL DE CDT</span>
-          <span class="metric-value" id="m-total-cdt">0</span>
+          <div class="metric-group">
+            <span class="metric-label">TOTAL DE CDT</span>
+            <span class="metric-value" id="m-total-cdt">0</span>
+          </div>
+
+          <div class="metric-group">
+            <span class="metric-label">TOTAL DE INCIDENTE</span>
+            <span class="metric-value" id="m-total-incidente">0</span>
+          </div>
         </div>
 
         <div class="metric">
-          <span class="metric-label">TEMPO MÉDIO DE ENTREGA (CDT)</span>
-          <span class="metric-value" id="m-avg-cdt">--</span>
+          <div class="metric-group">
+            <span class="metric-label">TEMPO MÉDIO DE ENTREGA (CDT)</span>
+            <span class="metric-value" id="m-avg-cdt">--</span>
+          </div>
+
+          <div class="metric-group">
+            <span class="metric-label">TEMPO MÉDIO DE ENTREGA (INCIDENTE)</span>
+            <span class="metric-value" id="m-avg-incidente">--</span>
+          </div>
         </div>
       </div>
 
@@ -99,7 +113,6 @@
         </table>
       </div>
 
-      <!-- (APENAS ESSE) Atualizado em cima da imagem grande / centralizado -->
       <div class="updated-at" id="m-updated-bottom" style="text-align:center;">Atualizado há --</div>
 
       <div class="support-row">
@@ -126,7 +139,6 @@
 
   </main>
 
-  <!-- JS (ordem IMPORTA) -->
   <script src="./assests/js/config.js"></script>
   <script src="./assests/js/api.js"></script>
   <script src="./assests/js/painel-sla.js"></script>
